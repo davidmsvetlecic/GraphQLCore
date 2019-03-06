@@ -1,45 +1,42 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using GraphQL;
+using GraphQL.Http;
+using GraphQL.Types;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GraphQLAPI
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
-        public IConfiguration Configuration { get; }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseBrowserLink();
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-            }
+            var schema = new Schema {Query = new HelloWorldQuery()};
 
-            app.UseStaticFiles();
+            app.Run(async (context) =>
+            {
+                var result = await new DocumentExecuter().ExecuteAsync(doc =>
+                {
+                    doc.Schema = schema;
+                    doc.Query = @"
+                        {
+                            howdy
+                            hello
+                        }
+                    ";
+                }).ConfigureAwait(false);
 
-            app.UseMvc();
+                var json = new DocumentWriter(indent: true).Write(result);
+
+                await context.Response.WriteAsync(json);
+            });
         }
     }
 }
