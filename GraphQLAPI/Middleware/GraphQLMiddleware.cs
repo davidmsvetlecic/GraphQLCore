@@ -6,6 +6,7 @@ using GraphQL.Http;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using GraphQL.Types;
+using Newtonsoft.Json.Linq;
 
 namespace GraphQLAPI.Middleware
 {
@@ -39,6 +40,7 @@ namespace GraphQLAPI.Middleware
                     {
                         doc.Schema = _schema;
                         doc.Query = request.Query;
+                        doc.Inputs = request.Variables.ToInputs();
                     }).ConfigureAwait(false);
 
                     var json = _writer.Write(result);
@@ -55,5 +57,6 @@ namespace GraphQLAPI.Middleware
     public class GraphQLRequest
     {
         public string Query { get; set; }
+        public JObject Variables { get; set; }
     }
 }
